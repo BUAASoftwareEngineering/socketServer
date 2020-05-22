@@ -40,6 +40,8 @@ public class IOHandler extends TextWebSocketHandler {
 
         // start a thread to send output back to browser
         threadPool.execTask(new OutputTask(session));
+
+        log.info("start io thread successfully");
     }
 
     @Override
@@ -49,6 +51,8 @@ public class IOHandler extends TextWebSocketHandler {
         // remove saved session and delete generated files
         sessionRegistry.removeSession(userId);
         deleteCodeFolder(userId);
+
+        log.info("clean temp folder successfully");
     }
 
     private void deleteCodeFolder(String userId) {

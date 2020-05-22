@@ -3,8 +3,6 @@ package org.nocturne.interceptor;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.nocturne.component.WsSessionRegistry;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -17,13 +15,6 @@ import java.util.Map;
 @Slf4j
 @Component
 public class WsSessionHandleInterceptor implements HandshakeInterceptor {
-
-    private final WsSessionRegistry sessionRegistry;
-
-    @Autowired
-    public WsSessionHandleInterceptor(WsSessionRegistry sessionRegistry) {
-        this.sessionRegistry = sessionRegistry;
-    }
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request,

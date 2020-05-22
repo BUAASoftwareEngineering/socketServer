@@ -13,6 +13,8 @@ import java.io.FileWriter;
 
 public class OutputTask implements Runnable {
 
+    private static final int SLEEP_THRESHOLD = 40;
+
     private final WebSocketSession session;
 
     public OutputTask(WebSocketSession session) {
@@ -22,26 +24,26 @@ public class OutputTask implements Runnable {
     @SneakyThrows
     @Override
     public void run() {
+        int sleepCount = 0;
+
         String userId = SessionUtil.getUserIdFromWsSession(session);
         BufferedWriter blocker = new BufferedWriter(new FileWriter(PathUtil.getCodeFolderPath(userId) + "/input.pipe"));
 
         BufferedReader reader = new BufferedReader(new FileReader(PathUtil.getCodeFolderPath(userId) + "/output.pipe"));
-        while (session.isOpen()) {
+        while (session.isOpen() && sleepCount < SLEEP_THRESHOLD) {
             if (!reader.ready()) {
                 Thread.sleep(1000);
+                sleepCount++;
                 continue;
             }
 
             while (reader.ready()) {
                 String line = reader.readLine();
-                if (line == null) {
-                    session.close();
-                } else {
-                    session.sendMessage(new TextMessage(line + "\n"));
-                }
+                session.sendMessage(new TextMessage(line + "\n"));
             }
         }
 
+        session.close();
         reader.close();
         blocker.close();
     }
