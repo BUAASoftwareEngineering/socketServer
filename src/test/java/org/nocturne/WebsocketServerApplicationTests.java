@@ -13,7 +13,7 @@ class WebsocketServerApplicationTests {
     @Test
     void contextLoads() throws Exception {
         File dir = new File("/home/nocturne/temp/123");
-        Runtime.getRuntime().exec(new String[]{"sh", "-c", "python main.py < input.pipe > output.pipe &"}, null, dir).waitFor();
+        Runtime.getRuntime().exec(new String[]{"sh", "-c", "mkfifo input.pipe"}, null, dir).waitFor();
 
     }
 

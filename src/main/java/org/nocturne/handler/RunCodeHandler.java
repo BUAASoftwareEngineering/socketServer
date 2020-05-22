@@ -3,6 +3,9 @@ package org.nocturne.handler;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.nocturne.bean.CodeFile;
+import org.nocturne.util.PathUtil;
+import org.nocturne.util.SessionUtil;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -10,11 +13,12 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.*;
 
 @Slf4j
+@Component
 public class RunCodeHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String userId = session.getAttributes().get("userId").toString();
+        String userId = SessionUtil.getUserIdFromWsSession(session);
 
         runCode(message, userId);
         log.info(String.format("[%s] start running code", userId));
@@ -36,15 +40,15 @@ public class RunCodeHandler extends TextWebSocketHandler {
     private void createRunCodeFolderAndFile(CodeFile codeFile, String userId) {
         try {
             createCodeFolder(userId);
-            createPipeLine(userId);
             createCodeFile(codeFile, userId);
+            createPipeLine(userId);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void createCodeFolder(String userId) {
-        File file = new File(getCodeFolderPath(userId));
+        File file = new File(PathUtil.getCodeFolderPath(userId));
 
         if (!file.mkdirs()) {
             log.error(String.format("[%s] folder create error!", userId));
@@ -52,7 +56,7 @@ public class RunCodeHandler extends TextWebSocketHandler {
     }
 
     private void createCodeFile(CodeFile codeFile, String userId) throws IOException {
-        File file = new File(getCodeFilePath(codeFile, userId));
+        File file = new File(PathUtil.getCodeFilePath(codeFile, userId));
 
         boolean ignore = file.createNewFile();
 
@@ -62,14 +66,14 @@ public class RunCodeHandler extends TextWebSocketHandler {
     }
 
     private void createPipeLine(String userId) throws IOException {
-        File workDir = new File(getCodeFolderPath(userId));
+        File workDir = new File(PathUtil.getCodeFolderPath(userId));
 
-        Runtime.getRuntime().exec(new String[]{"mkfifo input.pipe"}, null, workDir);
-        Runtime.getRuntime().exec(new String[]{"mkfifo output.pipe"}, null, workDir);
+        Runtime.getRuntime().exec(new String[]{"sh", "-c", "mkfifo input.pipe"}, null, workDir);
+        Runtime.getRuntime().exec(new String[]{"sh", "-c", "mkfifo output.pipe"}, null, workDir);
     }
 
     private void doRunCode(CodeFile codeFile, String userId) throws InterruptedException, IOException {
-        String folderPath = getCodeFolderPath(userId);
+        String folderPath = PathUtil.getCodeFolderPath(userId);
 
         Runtime runtime = Runtime.getRuntime();
         switch (codeFile.getType()) {
@@ -85,13 +89,5 @@ public class RunCodeHandler extends TextWebSocketHandler {
                 throw new UnsupportedOperationException();
             }
         }
-    }
-
-    private String getCodeFilePath(CodeFile codeFile, String userId) {
-        return "/home/nocturne/temp/" + userId + "/main" + codeFile.getType().getFileSuffix();
-    }
-
-    private String getCodeFolderPath(String userId) {
-        return "/home/nocturne/temp/" + userId;
     }
 }

@@ -15,6 +15,10 @@ public class WsSessionRegistry {
         sessionMap.put(userId, session);
     }
 
+    public void removeSession(String userId) {
+        sessionMap.remove(userId);
+    }
+
     public WebSocketSession getSession(String userId) {
         return sessionMap.get(userId);
     }
