@@ -1,6 +1,7 @@
 package org.nocturne.task;
 
 import lombok.SneakyThrows;
+import org.nocturne.component.ProcessRegistry;
 import org.nocturne.util.PathUtil;
 import org.nocturne.util.SessionUtil;
 import org.springframework.web.socket.TextMessage;
@@ -16,9 +17,11 @@ public class OutputTask implements Runnable {
     private static final int SLEEP_THRESHOLD = 40;
 
     private final WebSocketSession session;
+    private final Process process;
 
-    public OutputTask(WebSocketSession session) {
+    public OutputTask(WebSocketSession session, ProcessRegistry processRegistry) {
         this.session = session;
+        this.process = processRegistry.getProcess(SessionUtil.getUserIdFromWsSession(session));
     }
 
     @SneakyThrows
@@ -43,6 +46,7 @@ public class OutputTask implements Runnable {
             }
         }
 
+        process.destroy();
         session.close();
         reader.close();
         blocker.close();

@@ -3,8 +3,10 @@ package org.nocturne.handler;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.nocturne.bean.CodeFile;
+import org.nocturne.component.ProcessRegistry;
 import org.nocturne.util.PathUtil;
 import org.nocturne.util.SessionUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -16,19 +18,28 @@ import java.io.*;
 @Component
 public class RunCodeHandler extends TextWebSocketHandler {
 
+    private final ProcessRegistry processRegistry;
+
+    @Autowired
+    public RunCodeHandler(ProcessRegistry processRegistry) {
+        this.processRegistry = processRegistry;
+    }
+
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String userId = SessionUtil.getUserIdFromWsSession(session);
 
-        runCode(message, userId);
+        Process process = runCode(message, userId);
+
+        this.processRegistry.addProcess(userId, process);
         log.info(String.format("[%s] start running code", userId));
     }
 
-    private void runCode(TextMessage message, String userId) throws InterruptedException, IOException {
+    private Process runCode(TextMessage message, String userId) throws InterruptedException, IOException {
         CodeFile codeFile = getCodeFileFromInputJSON(message);
 
         createRunCodeFolderAndFile(codeFile, userId);
-        doRunCode(codeFile, userId);
+        return doRunCode(codeFile, userId);
     }
 
     private CodeFile getCodeFileFromInputJSON(TextMessage message) {
@@ -72,14 +83,13 @@ public class RunCodeHandler extends TextWebSocketHandler {
         Runtime.getRuntime().exec(new String[]{"sh", "-c", "mkfifo output.pipe"}, null, workDir);
     }
 
-    private void doRunCode(CodeFile codeFile, String userId) throws InterruptedException, IOException {
+    private Process doRunCode(CodeFile codeFile, String userId) throws InterruptedException, IOException {
         String folderPath = PathUtil.getCodeFolderPath(userId);
 
         Runtime runtime = Runtime.getRuntime();
         switch (codeFile.getType()) {
             case PYTHON: {
-                runtime.exec(new String[]{"sh", "-c", "python main.py < input.pipe > output.pipe &"}, null, new File(folderPath));
-                break;
+                return runtime.exec(new String[]{"sh", "-c", "python main.py < input.pipe > output.pipe &"}, null, new File(folderPath));
             }
             case JAVA: {
             }

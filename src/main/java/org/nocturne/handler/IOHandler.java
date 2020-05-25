@@ -2,6 +2,7 @@ package org.nocturne.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.nocturne.component.OutputThreadPool;
+import org.nocturne.component.ProcessRegistry;
 import org.nocturne.component.WsSessionRegistry;
 import org.nocturne.task.OutputTask;
 import org.nocturne.util.PathUtil;
@@ -23,12 +24,15 @@ import java.io.FileWriter;
 public class IOHandler extends TextWebSocketHandler {
 
     private final WsSessionRegistry sessionRegistry;
+    private final ProcessRegistry processRegistry;
     private final OutputThreadPool threadPool;
 
     @Autowired
-    public IOHandler(WsSessionRegistry registry,
+    public IOHandler(WsSessionRegistry sessionRegistry,
+                     ProcessRegistry processRegistry,
                      OutputThreadPool threadPool) {
-        this.sessionRegistry = registry;
+        this.sessionRegistry = sessionRegistry;
+        this.processRegistry = processRegistry;
         this.threadPool = threadPool;
     }
 
@@ -39,7 +43,7 @@ public class IOHandler extends TextWebSocketHandler {
         sessionRegistry.addSession(userId, session);
 
         // start a thread to send output back to browser
-        threadPool.execTask(new OutputTask(session));
+        threadPool.execTask(new OutputTask(session, processRegistry));
 
         log.info("start io thread successfully");
     }
@@ -50,6 +54,7 @@ public class IOHandler extends TextWebSocketHandler {
 
         // remove saved session and delete generated files
         sessionRegistry.removeSession(userId);
+        processRegistry.removeProcess(userId);
         deleteCodeFolder(userId);
 
         log.info("clean temp folder successfully");
