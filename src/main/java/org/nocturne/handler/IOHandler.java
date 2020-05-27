@@ -38,6 +38,9 @@ public class IOHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        // wait one second for client to add listener
+        Thread.sleep(1000);
+
         // save session in registry
         String userId = SessionUtil.getUserIdFromWsSession(session);
         sessionRegistry.addSession(userId, session);

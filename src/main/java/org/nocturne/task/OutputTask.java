@@ -44,6 +44,8 @@ public class OutputTask implements Runnable {
                 String line = reader.readLine();
                 session.sendMessage(new TextMessage(line + "\n"));
             }
+
+            if (!process.isAlive()) break;
         }
 
         process.destroy();

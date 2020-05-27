@@ -35,6 +35,6 @@ public class WsSessionHandleInterceptor implements HandshakeInterceptor {
 
     @Override
     public void afterHandshake(ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse, WebSocketHandler webSocketHandler, Exception e) {
-        log.info("handshake success");
+        log.info("handshake successfully");
     }
 }
