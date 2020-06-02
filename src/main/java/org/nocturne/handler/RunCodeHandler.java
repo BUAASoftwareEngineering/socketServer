@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.util.FileSystemUtils;
 
 import java.io.*;
 
@@ -30,16 +31,22 @@ public class RunCodeHandler extends TextWebSocketHandler {
         String userId = SessionUtil.getUserIdFromWsSession(session);
 
         Process process = runCode(message, userId);
-
         this.processRegistry.addProcess(userId, process);
+
         log.info(String.format("[%s] start running code", userId));
     }
 
     private Process runCode(TextMessage message, String userId) throws InterruptedException, IOException {
         CodeFile codeFile = getCodeFileFromInputJSON(message);
 
+        deleteOldFolder(userId);
         createRunCodeFolderAndFile(codeFile, userId);
         return doRunCode(codeFile, userId);
+    }
+
+    private void deleteOldFolder(String userId) {
+        File codeFolder = new File(PathUtil.getCodeFolderPath(userId));
+        FileSystemUtils.deleteRecursively(codeFolder);
     }
 
     private CodeFile getCodeFileFromInputJSON(TextMessage message) {
