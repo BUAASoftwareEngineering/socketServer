@@ -34,7 +34,9 @@ public class OutputTask implements Runnable {
 
         BufferedReader reader = new BufferedReader(new FileReader(PathUtil.getCodeFolderPath(userId) + "/output.pipe"));
         while (session.isOpen() && sleepCount < SLEEP_THRESHOLD) {
-            if (!reader.ready() && process.isAlive()) {
+            if (!process.isAlive() && !reader.ready()) break;
+
+            if (!reader.ready()) {
                 Thread.sleep(1000);
                 sleepCount++;
                 continue;
@@ -44,8 +46,6 @@ public class OutputTask implements Runnable {
                 String line = reader.readLine();
                 session.sendMessage(new TextMessage(line + "\n"));
             }
-
-            if (!process.isAlive()) break;
         }
 
         process.destroy();
