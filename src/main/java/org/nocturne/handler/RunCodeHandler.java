@@ -89,11 +89,13 @@ public class RunCodeHandler extends TextWebSocketHandler {
         Runtime runtime = Runtime.getRuntime();
         switch (codeFile.getType()) {
             case PYTHON: {
-                return runtime.exec(new String[]{"sh", "-c", "python main.py < input.pipe > output.pipe &"}, null, new File(folderPath));
-            }
-            case JAVA: {
+                return runtime.exec(new String[]{"sh", "-c", "python main.py < input.pipe &> output.pipe &"}, null, new File(folderPath));
             }
             case CPP: {
+		runtime.exec(new String[]{"sh", "-c", "g++ main.cpp"}, null, new File(folderPath)).waitFor();
+		return runtime.exec(new String[]{"sh", "-c", "./a.out < input.pipe &> output.pipe &"}, null, new File(folderPath));
+            }
+            case JAVA: {
             }
             default: {
                 throw new UnsupportedOperationException();
